@@ -35,8 +35,9 @@ endif
 
 .PHONY: scribe clean
 
-scribe: LDFLAGS += -Ibuild/include -Lbuild/lib -lraylib -lbstr
 scribe: build $(BSTR_TARGET) $(RAYLIB_TARGET) $(FFMPEG_TARGET) scribe.c 
+scribe: 
+	$(eval LDFLAGS += -Ibuild/include -Lbuild/lib -lraylib -lbstr)
 	$(CC) -std=c23 -O1 $(CFLAGS) $(LDFLAGS) \
 		$(shell pkg-config --with-path=./build/lib/pkgconfig --libs-only-other $(FFMPEG_LIBS)) \
 		$(shell pkg-config --with-path=./build/lib/pkgconfig --libs-only-l $(FFMPEG_LIBS)) \
