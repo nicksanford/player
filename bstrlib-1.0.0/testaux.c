@@ -404,28 +404,28 @@ int test14(void) {
   return ret;
 }
 
-int main(void) {
-  int ret = 0;
-
-  printf("Direct case testing of bstraux functions\n");
-
-  ret += test0();
-  ret += test1();
-  ret += test2();
-  ret += test3();
-  ret += test4();
-  ret += test5();
-  ret += test6();
-  ret += test7();
-  // ret += test8();
-  ret += test9();
-  ret += test10();
-  ret += test11();
-  ret += test12();
-  ret += test13();
-  ret += test14();
-
-  printf("# test failures: %d\n", ret);
-
-  return 0;
-}
+// int main(void) {
+//   int ret = 0;
+//
+//   printf("Direct case testing of bstraux functions\n");
+//
+//   ret += test0();
+//   ret += test1();
+//   ret += test2();
+//   ret += test3();
+//   ret += test4();
+//   ret += test5();
+//   ret += test6();
+//   ret += test7();
+//   // ret += test8();
+//   ret += test9();
+//   ret += test10();
+//   ret += test11();
+//   ret += test12();
+//   ret += test13();
+//   ret += test14();
+//
+//   printf("# test failures: %d\n", ret);
+//
+//   return 0;
+// }

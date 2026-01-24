@@ -1,9 +1,10 @@
 MACOSX_DEPLOYMENT_TARGET ?= 14.0.0
-CC ?= clang
+CC = zig cc
 PLATFORM ?= $(shell uname -s)-$(shell uname -m)
 BIN_OUTPUT_PATH ?= bin/$(PLATFORM)
 # RAYLIB_VERSION ?= 9b183e0c5e5786a8a92e34e6a8f941586c12c39d 
-CFLAGS ?= -Wall -Wextra -Wpedantic -Wnull-dereference -Wdouble-promotion  -Wshadow -Wunused -Wenum-conversion -Wuninitialized -Werror -Wno-unused-parameter -g -fdata-sections -ffunction-sections -fno-omit-frame-pointer -fsanitize-address-use-after-scope -fsanitize-address-use-odr-indicator -fsanitize-cfi-cross-dso -fno-common -ggdb -fsanitize=address -fsanitize-address-use-after-scope  -fsanitize-address-use-after-return=always 
+# CFLAGS ?= -Wall -Wextra -Wpedantic -Wnull-dereference -Wdouble-promotion  -Wshadow -Wunused -Wenum-conversion -Wuninitialized -Werror -Wno-unused-parameter -g -fdata-sections -ffunction-sections -fno-omit-frame-pointer -fsanitize-address-use-after-scope -fno-common -ggdb -fsanitize=address -fsanitize-address-use-after-scope  
+CFLAGS ?= -Wall -Wextra -Wpedantic -Wnull-dereference -Wdouble-promotion  -Wshadow -Wunused -Wenum-conversion -Wuninitialized -Werror -Wno-unused-parameter -g -fdata-sections -ffunction-sections -fno-omit-frame-pointer -fno-common -ggdb 
 BSTR_SOURCES=$(wildcard bstrlib-1.0.0/*.c)
 BSTR_OBJECTS=$(patsubst %.c,%.o,$(BSTR_SOURCES))
 BSTR_HEADERS=$(wildcard bstrlib-1.0.0/*.h)
@@ -18,29 +19,32 @@ FFMPEG_LIBS=    libavformat \
 
 
 SOURCE_OS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
-ifeq ($(SOURCE_OS),linux)
-    NPROC ?= $(shell nproc)
-else ifeq ($(SOURCE_OS),darwin)
-    NPROC ?= $(shell sysctl -n hw.ncpu)
-else
-    NPROC ?= 1
-endif
+# NPROC ?= $(shell nproc)
+# ifeq ($(SOURCE_OS),linux)
+#     NPROC ?= $(shell nproc)
+# else ifeq ($(SOURCE_OS),darwin)
+#     NPROC ?= $(shell sysctl -n hw.ncpu)
+# else
+#     NPROC ?= 1
+# endif
 
-ifeq ($(PLATFORM),Darwin-arm64)
-LDFLAGS += -framework CoreVideo -framework Cocoa -framework IOKit -framework GLUT -framework OpenGL
-else
-	echo $(PLATFORM) not yet supported. Please edit Makefile
-	exit 1
-endif
+# ifeq ($(PLATFORM),Darwin-arm64)
+# LDFLAGS += -framework CoreVideo -framework Cocoa -framework IOKit -framework GLUT -framework OpenGL
+# else
+# 	echo $(PLATFORM) not yet supported. Please edit Makefile
+# 	exit 1
+# endif
+#
+.PHONY: scribe clean clean-all
 
-.PHONY: scribe clean
-
-scribe: build $(BSTR_TARGET) $(RAYLIB_TARGET) $(FFMPEG_TARGET) scribe.c 
+# scribe: build $(BSTR_TARGET) $(RAYLIB_TARGET) $(FFMPEG_TARGET) scribe.c 
+scribe: build $(RAYLIB_TARGET) $(FFMPEG_TARGET) scribe.c 
 scribe: 
-	$(eval LDFLAGS += -Ibuild/include -Lbuild/lib -lraylib -lbstr)
+#$(eval LDFLAGS += -Ibuild/include -Lbuild/lib -lraylib -lbstr)
+	$(eval LDFLAGS += -Ibuild/include -Lbuild/lib -lraylib)
 	$(CC) -std=c23 -O1 $(CFLAGS) $(LDFLAGS) \
-		$(shell pkg-config --with-path=./build/lib/pkgconfig --libs-only-other $(FFMPEG_LIBS)) \
-		$(shell pkg-config --with-path=./build/lib/pkgconfig --libs-only-l $(FFMPEG_LIBS)) \
+		$(shell PKG_CONFIG_PATH=./build/lib/pkgconfig pkg-config --libs-only-other $(FFMPEG_LIBS)) \
+		$(shell PKG_CONFIG_PATH=./build/lib/pkgconfig pkg-config --libs-only-l $(FFMPEG_LIBS)) \
 		scribe.c \
 		-o $(BIN_OUTPUT_PATH)/scribe
 
@@ -73,7 +77,7 @@ $(BSTR_SO_TARGET): $(BSTR_TARGET) $(BSTR_OBJECTS)
 
 $(RAYLIB_TARGET): build 
 	cp raygui.h ./raylib/src/raylib.h ./raylib/src/rlgl.h ./raylib/src/raymath.h ./build/include
-	cd raylib/src && MACOSX_DEPLOYMENT_TARGET=${MACOSX_DEPLOYMENT_TARGET} RAYLIB_RELEASE_PATH=$(abspath build/lib) make -j$(NPROC) 
+	cd raylib/src && RAYLIB_RELEASE_PATH=$(abspath build/lib) make -j$(NPROC) 
 
 
 FFMPEG_CONFIG_OPTS = --prefix=../build \
@@ -113,6 +117,8 @@ FFmpeg:
 
 clean:
 	rm -rf bin build $(BSTR_OBJECTS) 
+
+clean-all:
 	cd raylib/src && make clean 
 	cd FFmpeg && make clean
 

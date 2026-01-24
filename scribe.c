@@ -16,7 +16,6 @@
  *
  ********************************************************************************************/
 
-#include "libavutil/log.h"
 #include "raylib/src/raylib.h"
 #include <assert.h>
 #include <raylib.h>
@@ -28,7 +27,7 @@
 #include "libavutil/error.h"
 #include "libavutil/pixfmt.h"
 #include <assert.h>
-#include <bstrlib.h>
+// #include <bstrlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h> // Required for: calloc(), free()
@@ -42,8 +41,6 @@
 #include <libavutil/opt.h>
 #include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define SCRIBE_SOURCE_PIX_FMT AV_PIX_FMT_YUV420P
 #define SCRIBE_TARGET_PIX_FMT AV_PIX_FMT_RGBA
@@ -308,7 +305,7 @@ int scribe_decoder_ctx_init(scribe_decoder_ctx **p_ctx, // OUT
   printf("video_id: %d\n", video->id);
   printf("avg_frame_rate: %d/%d\n", video->avg_frame_rate.num,
          video->avg_frame_rate.den);
-  printf("duration: %lld\n", video->duration);
+  printf("duration: %ld\n", video->duration);
   printf("width: %d, height: %d, codec_id: %d, format: %d\n",
          video->codecpar->width, video->codecpar->height,
          video->codecpar->codec_id, video->codecpar->format);
@@ -389,7 +386,6 @@ int main(void) {
   Texture2D texture = {0};
   bool fileProvided = false;
   bool pause = false;
-  const bstring filepath = bfromcstr("");
   int err = 0;
   int targetFPS = 60;
   int windowWidth = 800;
@@ -434,10 +430,9 @@ int main(void) {
           scribe_decoder_ctx_free(&video_ctx);
         }
 
-        assert(bassigncstr(filepath, droppedFiles.paths[0]) == BSTR_OK);
         fileProvided = true;
-        if (IsFileExtension((const char *)filepath->data, ".mp4")) {
-          if (scribe_decoder_ctx_init(&video_ctx, (char *)filepath->data,
+        if (IsFileExtension(droppedFiles.paths[0], ".mp4")) {
+          if (scribe_decoder_ctx_init(&video_ctx, droppedFiles.paths[0],
                                       windowWidth, windowHeight)) {
             fprintf(stderr, "failed to init decoder");
             return -1;
@@ -449,7 +444,7 @@ int main(void) {
             UnloadTexture(texture);
           }
 
-          texture = LoadTexture((const char *)filepath->data);
+          texture = LoadTexture(droppedFiles.paths[0]);
           SetWindowSize(texture.width, texture.height);
         }
       }
@@ -499,7 +494,6 @@ int main(void) {
   CloseWindow(); // Close window and OpenGL context
 
   // De-Initialization
-  assert(bdestroy(filepath) != BSTR_ERR);
   if (video_ctx) {
     scribe_decoder_ctx_free(&video_ctx);
   }
