@@ -1,28 +1,3 @@
-/*
- * Copyright (c) 2017 Jun Zhao
- * Copyright (c) 2017 Kaixuan Liu
- *
- * HW Acceleration API (video decoding) decode sample
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
 /**
  * @file HW-accelerated decoding API usage.example
  * @example hw_decode.c
@@ -49,7 +24,6 @@
 #include <libavutil/pixdesc.h>
 #include <libswscale/swscale.h>
 #include <stdlib.h>
-#include <string.h>
 
 #define SCRIBE_SOURCE_PIX_FMT AV_PIX_FMT_YUV420P
 #define SCRIBE_TARGET_PIX_FMT AV_PIX_FMT_RGBA
@@ -167,6 +141,7 @@ static int decode_to_buffer(scribe_decoder_ctx *ctx) {
     return 1;
   }
 }
+
 void scribe_decoder_ctx_free(scribe_decoder_ctx **p_ctx) {
   assert(p_ctx != NULL);
   assert(*p_ctx != NULL);
@@ -255,7 +230,7 @@ int scribe_decoder_ctx_init(scribe_decoder_ctx **p_ctx, // OUT
   printf("video_id: %d\n", video->id);
   printf("avg_frame_rate: %d/%d\n", video->avg_frame_rate.num,
          video->avg_frame_rate.den);
-  printf("duration: %lld\n", video->duration);
+  printf("duration: %ld\n", video->duration);
   printf("width: %d, height: %d, codec_id: %d, format: %d\n",
          video->codecpar->width, video->codecpar->height,
          video->codecpar->codec_id, video->codecpar->format);
@@ -337,9 +312,9 @@ int main(int argc, char *argv[]) {
   while (true) {
     err = decode_to_buffer(ctx);
     if (err == 1) {
-      printf("pts: %lld\n", ctx->yuv_frame->pts);
+      printf("pts: %ld\n", ctx->yuv_frame->pts);
       bzero(buf, sizeof(buf));
-      snprintf(buf, sizeof(buf), "%s/%lld.rgba", argv[2], ctx->yuv_frame->pts);
+      snprintf(buf, sizeof(buf), "%s/%ld.rgba", argv[2], ctx->yuv_frame->pts);
       f = fopen(buf, "wb");
       fwrite(ctx->buffer, ctx->buffer_size, 1, f);
       fclose(f);

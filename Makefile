@@ -5,11 +5,6 @@ BIN_OUTPUT_PATH ?= bin/$(PLATFORM)
 # RAYLIB_VERSION ?= 9b183e0c5e5786a8a92e34e6a8f941586c12c39d 
 # CFLAGS ?= -Wall -Wextra -Wpedantic -Wnull-dereference -Wdouble-promotion  -Wshadow -Wunused -Wenum-conversion -Wuninitialized -Werror -Wno-unused-parameter -g -fdata-sections -ffunction-sections -fno-omit-frame-pointer -fsanitize-address-use-after-scope -fno-common -ggdb -fsanitize=address -fsanitize-address-use-after-scope  
 CFLAGS ?= -Wall -Wextra -Wpedantic -Wnull-dereference -Wdouble-promotion  -Wshadow -Wunused -Wenum-conversion -Wuninitialized -Werror -Wno-unused-parameter -g -fdata-sections -ffunction-sections -fno-omit-frame-pointer -fno-common -ggdb 
-BSTR_SOURCES=$(wildcard bstrlib-1.0.0/*.c)
-BSTR_OBJECTS=$(patsubst %.c,%.o,$(BSTR_SOURCES))
-BSTR_HEADERS=$(wildcard bstrlib-1.0.0/*.h)
-BSTR_TARGET=build/lib/libbstr.a
-BSTR_SO_TARGET=$(patsubst %.a,%.so,$(BSTR_TARGET))
 RAYLIB_TARGET=build/lib/libraylib.a
 FFMPEG_TARGET=build/lib/libavcodec.a
 FFMPEG_LIBS=    libavformat \
@@ -37,25 +32,14 @@ SOURCE_OS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
 #
 .PHONY: scribe clean clean-all
 
-# scribe: build $(BSTR_TARGET) $(RAYLIB_TARGET) $(FFMPEG_TARGET) scribe.c 
 scribe: build $(RAYLIB_TARGET) $(FFMPEG_TARGET) scribe.c 
 scribe: 
-#$(eval LDFLAGS += -Ibuild/include -Lbuild/lib -lraylib -lbstr)
 	$(eval LDFLAGS += -Ibuild/include -Lbuild/lib -lraylib)
-	$(CC) -std=c23 -O1 $(CFLAGS) $(LDFLAGS) \
+	$(CC) -std=c23 -O3 $(CFLAGS) $(LDFLAGS) \
 		$(shell PKG_CONFIG_PATH=./build/lib/pkgconfig pkg-config --libs-only-other $(FFMPEG_LIBS)) \
 		$(shell PKG_CONFIG_PATH=./build/lib/pkgconfig pkg-config --libs-only-l $(FFMPEG_LIBS)) \
 		scribe.c \
 		-o $(BIN_OUTPUT_PATH)/scribe
-
-main: LDFLAGS += -Ibuild/include -Lbuild/lib
-main: build $(BSTR_TARGET) $(RAYLIB_TARGET) $(FFMPEG_TARGET) main.c 
-	$(CC) -std=c23 -O1 $(CFLAGS) $(LDFLAGS) \
-		$(shell pkg-config --with-path=./build/lib/pkgconfig --libs-only-other $(FFMPEG_LIBS)) \
-		$(shell pkg-config --with-path=./build/lib/pkgconfig --libs-only-l $(FFMPEG_LIBS)) \
-		main.c \
-		-o $(BIN_OUTPUT_PATH)/main
-
 
 bin:
 	mkdir -p $(BIN_OUTPUT_PATH)
@@ -65,15 +49,6 @@ build: bin
 	mkdir -p build/include 
 	mkdir -p build/lib
 	mkdir -p build/share
-
-$(BSTR_TARGET): CFLAGS += -fPIC
-$(BSTR_TARGET): build $(BSTR_OBJECTS)
-	cp $(BSTR_HEADERS) ./build/include
-	ar rcs $@ $(BSTR_OBJECTS)
-	ranlib $@
-
-$(BSTR_SO_TARGET): $(BSTR_TARGET) $(BSTR_OBJECTS)
-	$(CC) -std=c23 -O1 $(CFLAGS) $(LDFLAGS) -shared -o $@ $(BSTR_OBJECTS)
 
 $(RAYLIB_TARGET): build 
 	cp raygui.h ./raylib/src/raylib.h ./raylib/src/rlgl.h ./raylib/src/raymath.h ./build/include
@@ -116,7 +91,7 @@ FFmpeg:
 	git submodule update --init
 
 clean:
-	rm -rf bin build $(BSTR_OBJECTS) 
+	rm -rf bin build 
 
 clean-all:
 	cd raylib/src && make clean 
