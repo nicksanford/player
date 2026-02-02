@@ -22,7 +22,7 @@
     // original project's identity. Thus it is recommended to leave the comment
     // on the following line intact, so that it shows up in code reviews that
     // modify the field.
-    .fingerprint = 0x3eff0a2b2b77a002, // Changing this has security and trust implications.
+    .fingerprint = 0x3eff0a2bbb077a33, // Changing this has security and trust implications.
     // Tracks the earliest Zig version that the package considers to be a
     // supported use case.
     .minimum_zig_version = "0.15.2",
@@ -32,13 +32,17 @@
     // Once all dependencies are fetched, `zig build` no longer requires
     // internet connectivity.
     .dependencies = .{
-        .raylib = .{
-            .url = "git+https://github.com/raysan5/raylib.git#afe74c1c707a7c0d9499fb63f0120466c719c6fe",
-            .hash = "raylib-5.6.0-dev-whq8uNYpDQV7_-rZkjRxTqzy2AZb_TALE6fxWskBl_Vz",
-        },
         .ffmpeg = .{
             .url = "git+https://github.com/nicksanford/ffmpeg.git#e292158a3d77f296cac870ac6e1b7a229eab9f4a",
             .hash = "ffmpeg-7.0.1-8-zT7QA6h9CASzNa7sjq40sb31B4YioSujuufryAPgCB0G",
+        },
+        .raylib_zig = .{
+            .url = "git+https://github.com/raylib-zig/raylib-zig?ref=devel#cd71c85d571027ac8033357f83b124ee051825b3",
+            .hash = "raylib_zig-5.6.0-dev-KE8REENOBQC-m5nK7M2b5aKSIubJPbPLUYcRhT7aT3RN",
+        },
+        .emsdk = .{
+            .url = "git+https://github.com/emscripten-core/emsdk?ref=4.0.9#3bcf1dcd01f040f370e10fe673a092d9ed79ebb5",
+            .hash = "N-V-__8AAJl1DwBezhYo_VE6f53mPVm00R-Fk28NPW7P14EQ",
         },
     },
     .paths = .{
