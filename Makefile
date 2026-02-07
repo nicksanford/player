@@ -14,14 +14,14 @@ FFMPEG_LIBS=    libavformat \
 
 
 SOURCE_OS ?= $(shell uname -s | tr '[:upper:]' '[:lower:]')
-# NPROC ?= $(shell nproc)
-# ifeq ($(SOURCE_OS),linux)
-#     NPROC ?= $(shell nproc)
-# else ifeq ($(SOURCE_OS),darwin)
-#     NPROC ?= $(shell sysctl -n hw.ncpu)
-# else
-#     NPROC ?= 1
-# endif
+NPROC ?= $(shell nproc)
+ifeq ($(SOURCE_OS),linux)
+    NPROC ?= $(shell nproc)
+else ifeq ($(SOURCE_OS),darwin)
+    NPROC ?= $(shell sysctl -n hw.ncpu)
+else
+    NPROC ?= 1
+endif
 
 # ifeq ($(PLATFORM),Darwin-arm64)
 # LDFLAGS += -framework CoreVideo -framework Cocoa -framework IOKit -framework GLUT -framework OpenGL
