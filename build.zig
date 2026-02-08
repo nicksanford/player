@@ -13,19 +13,36 @@ pub fn build(b: *std.Build) !void {
     const raylib_dep = b.dependency("raylib_zig", .{
         .target = target,
         .optimize = optimize,
-        .linux_display_backend = rlz.LinuxDisplayBackend.Wayland,
     });
     const raylib = raylib_dep.module("raylib");
-    // const raylib_artifact = raylib_dep.artifact("raylib");
+
+    const mod = b.addModule("player", .{
+        // The root source file is the "entry point" of this module. Users of
+        // this module will only be able to access public declarations contained
+        // in this file, which means that if you have declarations that you
+        // intend to expose to consumers that were defined in other files part
+        // of this module, you will have to make sure to re-export them from
+        // the root file.
+        .root_source_file = b.path("src/root.zig"),
+        // Later on we'll use this module as the root module of a test executable
+        // which requires us to specify a target.
+        .target = target,
+    });
+    mod.addImport("raylib", raylib);
+    mod.linkLibrary(ffmpeg_dep.artifact("ffmpeg"));
+    mod.addImport("ffmpeg", ffmpeg_dep.module("av"));
 
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
+        .imports = &.{
+            .{ .name = "player", .module = mod },
+        },
     });
-    exe_mod.addImport("raylib", raylib);
-    exe_mod.linkLibrary(ffmpeg_dep.artifact("ffmpeg"));
-    exe_mod.addImport("ffmpeg", ffmpeg_dep.module("av"));
+    // exe_mod.addImport("raylib", raylib);
+    // exe_mod.linkLibrary(ffmpeg_dep.artifact("ffmpeg"));
+    // exe_mod.addImport("ffmpeg", ffmpeg_dep.module("av"));
 
     const run_step = b.step("run", "Run the app");
 
