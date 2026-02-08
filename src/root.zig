@@ -2,7 +2,7 @@
 const std = @import("std");
 const av = @import("ffmpeg");
 const rl = @import("raylib");
-const Decoder = @import("decoder.zig");
+const Decoder = @import("Decoder.zig");
 
 pub fn add(a: i32, b: i32) i32 {
     return a + b;
@@ -131,7 +131,9 @@ pub fn run() anyerror!void {
     }
 }
 
-test "basic test" {
-    const x = try av.Packet.alloc();
-    x.free();
+test {
+    std.testing.refAllDecls(@This());
+    _ = @import("Decoder.zig");
+    // const x = try av.Packet.alloc();
+    // x.free();
 }
