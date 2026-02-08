@@ -20,59 +20,57 @@ const Options = packed struct {
 };
 
 const App = struct {
-    window_width: i32 = 800,
-    window_height: i32 = 450,
+    window_width: i32,
+    window_height: i32,
     targetFPS: i32 = 60,
     decoder: Decoder,
     file_dropped: bool = false,
     opts: Options = .{},
+    maybe_texture: ?rl.Texture2D = null,
 
     const Self = @This();
     fn init() !Self {
-        return .{ .decoder = try Decoder.init() };
+        rl.initWindow(800, 450, "raylib-zig [core] example - basic window");
+        const app: Self = .{
+            .window_width = @divFloor(rl.getMonitorWidth(0), 2),
+            .window_height = @divFloor(rl.getMonitorHeight(0), 2),
+            .decoder = try Decoder.init(),
+        };
+        rl.setWindowSize(app.window_width, app.window_height);
+        rl.setWindowState(.{ .window_resizable = true });
+        rl.setTargetFPS(app.targetFPS);
+        return app;
     }
 
     fn deinit(self: *Self) void {
         self.decoder.deinit();
-    }
-};
-
-pub fn run() anyerror!void {
-    var app = try App.init();
-    defer app.deinit();
-    rl.initWindow(app.window_height, app.window_width, "raylib-zig [core] example - basic window");
-    defer rl.closeWindow(); // Close window and OpenGL context
-    app.window_width = @divFloor(rl.getMonitorWidth(0), 2);
-    app.window_height = @divFloor(rl.getMonitorHeight(0), 2);
-    rl.setWindowSize(app.window_width, app.window_height);
-    rl.setWindowState(.{ .window_resizable = true });
-    rl.setTargetFPS(app.targetFPS);
-    //--------------------------------------------------------------------------------------
-
-    // Main loop
-    var maybe_texture: ?rl.Texture2D = null;
-    defer {
-        if (maybe_texture) |texture| {
+        if (self.maybe_texture) |texture| {
             texture.unload();
         }
+        rl.closeWindow(); // Close window and OpenGL context
     }
-    while (!rl.windowShouldClose()) { // Detect window close button or ESC key
+
+    fn handleResize(self: *Self) void {
         if (rl.isWindowResized()) {
-            app.window_width = rl.getScreenWidth();
-            app.window_height = rl.getScreenHeight();
+            self.window_width = rl.getScreenWidth();
+            self.window_height = rl.getScreenHeight();
         }
+    }
 
-        // TODO pause
-
+    fn handleToggleFullScreen(self: *Self) void {
         if (rl.isKeyPressed(rl.KeyboardKey.t)) {
             rl.toggleFullscreen();
-            app.window_width = rl.getScreenWidth();
-            app.window_height = rl.getScreenHeight();
+            self.window_width = rl.getScreenWidth();
+            self.window_height = rl.getScreenHeight();
         }
+    }
 
+    fn handleFilesDropped(self: *Self) void {
         if (rl.isFileDropped()) {
-            app.file_dropped = true;
+            self.file_dropped = true;
             const dropped_files = rl.loadDroppedFiles();
+            defer rl.unloadDroppedFiles(dropped_files);
+            // TODO: reset decoder
             // TODO: when this happens implement
             // a files menu that allows you to switch
             // between the different files provided
@@ -84,44 +82,47 @@ pub fn run() anyerror!void {
             if (rl.isFileExtension(path, ".mp4")) {
                 unreachable;
             } else {
-                if (maybe_texture) |texture| {
+                if (self.maybe_texture) |texture| {
                     texture.unload();
                 }
-                maybe_texture = rl.loadTexture(path) catch null;
-                if (maybe_texture) |texture| {
-                    app.window_width = texture.width;
-                    app.window_height = texture.height;
-                    rl.setWindowSize(app.window_width, app.window_height);
+                self.maybe_texture = rl.loadTexture(path) catch null;
+                if (self.maybe_texture) |texture| {
+                    self.window_width = texture.width;
+                    self.window_height = texture.height;
+                    rl.setWindowSize(self.window_width, self.window_height);
                 }
             }
-            // TODO: reset decoder
-            defer rl.unloadDroppedFiles(dropped_files);
         }
-        // Update
-        //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
-        //----------------------------------------------------------------------------------
+    }
 
-        // Draw
-        //----------------------------------------------------------------------------------
+    fn draw(self: *Self) void {
         rl.beginDrawing();
         rl.clearBackground(.white);
 
-        if (maybe_texture) |texture| {
+        if (self.maybe_texture) |texture| {
             rl.drawTexture(texture, 0, 0, .white);
-        } else if (!app.file_dropped) {
+        } else if (!self.file_dropped) {
             rl.drawText("Drop your file into this window.", 100, 40, 20, .dark_gray);
         } else {
             rl.drawText("That is not a valid file type..", 100, 40, 20, .dark_gray);
             rl.drawText("Drop your file into this window.", 100, 60, 20, .dark_gray);
         }
 
-        if (app.opts.drawFPS) {
+        if (self.opts.drawFPS) {
             rl.drawFPS(100, 100);
         }
         defer rl.endDrawing();
+    }
+};
 
-        //----------------------------------------------------------------------------------
+pub fn run() anyerror!void {
+    var app = try App.init();
+    defer app.deinit();
+    while (!rl.windowShouldClose()) {
+        app.handleResize();
+        app.handleToggleFullScreen();
+        app.handleFilesDropped();
+        app.draw();
     }
 }
 
