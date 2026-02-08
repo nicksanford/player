@@ -29,10 +29,7 @@ const App = struct {
 
     const Self = @This();
     fn init() !Self {
-        const decoder = try Decoder.init();
-        return .{
-            .decoder = decoder,
-        };
+        return .{ .decoder = try Decoder.init() };
     }
 
     fn deinit(self: *Self) void {
@@ -41,8 +38,6 @@ const App = struct {
 };
 
 pub fn run() anyerror!void {
-    var x = try Decoder.init();
-    defer x.deinit();
     var app = try App.init();
     defer app.deinit();
     rl.initWindow(app.window_height, app.window_width, "raylib-zig [core] example - basic window");
@@ -52,15 +47,12 @@ pub fn run() anyerror!void {
     rl.setWindowSize(app.window_width, app.window_height);
     rl.setWindowState(.{ .window_resizable = true });
     rl.setTargetFPS(app.targetFPS);
-    // var buf: [4096]u8 = undefined;
-    // var fba = std.heap.FixedBufferAllocator.init(&buf);
-    // const scratch_allocator = fba.allocator();
     //--------------------------------------------------------------------------------------
 
-    // Main game loop
-    var texture: rl.Texture2D = .{ .id = 0, .width = 0, .height = 0, .mipmaps = 0, .format = .uncompressed_grayscale };
+    // Main loop
+    var maybe_texture: ?rl.Texture2D = null;
     defer {
-        if (rl.isTextureValid(texture)) {
+        if (maybe_texture) |texture| {
             texture.unload();
         }
     }
@@ -79,6 +71,7 @@ pub fn run() anyerror!void {
         }
 
         if (rl.isFileDropped()) {
+            app.file_dropped = true;
             const dropped_files = rl.loadDroppedFiles();
             // TODO: when this happens implement
             // a files menu that allows you to switch
@@ -91,20 +84,18 @@ pub fn run() anyerror!void {
             if (rl.isFileExtension(path, ".mp4")) {
                 unreachable;
             } else {
-                if (rl.isTextureValid(texture)) {
+                if (maybe_texture) |texture| {
                     texture.unload();
                 }
-                texture = try rl.loadTexture(path);
-                app.window_width = texture.width;
-                app.window_height = texture.height;
-                rl.setWindowSize(app.window_width, app.window_height);
+                maybe_texture = rl.loadTexture(path) catch null;
+                if (maybe_texture) |texture| {
+                    app.window_width = texture.width;
+                    app.window_height = texture.height;
+                    rl.setWindowSize(app.window_width, app.window_height);
+                }
             }
-            // const length = rl.textLength(ret);
-            // std.log.debug("path: {s}, len: {d}, slice_len: {d}\n", .{ path_raw, length, ret.len });
             // TODO: reset decoder
-            defer std.debug.print("executed unloadDroppedFiles\n", .{});
             defer rl.unloadDroppedFiles(dropped_files);
-            defer std.debug.print("executing unloadDroppedFiles\n", .{});
         }
         // Update
         //----------------------------------------------------------------------------------
@@ -114,13 +105,22 @@ pub fn run() anyerror!void {
         // Draw
         //----------------------------------------------------------------------------------
         rl.beginDrawing();
-        rl.drawTexture(texture, 0, 0, .white);
+        rl.clearBackground(.white);
+
+        if (maybe_texture) |texture| {
+            rl.drawTexture(texture, 0, 0, .white);
+        } else if (!app.file_dropped) {
+            rl.drawText("Drop your file into this window.", 100, 40, 20, .dark_gray);
+        } else {
+            rl.drawText("That is not a valid file type..", 100, 40, 20, .dark_gray);
+            rl.drawText("Drop your file into this window.", 100, 60, 20, .dark_gray);
+        }
+
         if (app.opts.drawFPS) {
             rl.drawFPS(100, 100);
         }
         defer rl.endDrawing();
 
-        rl.clearBackground(.white);
         //----------------------------------------------------------------------------------
     }
 }
