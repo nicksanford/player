@@ -23,18 +23,21 @@ const App = struct {
     window_width: i32,
     window_height: i32,
     targetFPS: i32 = 60,
-    decoder: Decoder,
+    decoder: ?Decoder,
     file_dropped: bool = false,
     opts: Options = .{},
     maybe_texture: ?rl.Texture2D = null,
 
     const Self = @This();
     fn init() !Self {
+        std.log.debug("allocating packet", .{});
+        const x = try av.Packet.alloc();
+        x.free();
         rl.initWindow(800, 450, "raylib-zig [core] example - basic window");
         const app: Self = .{
             .window_width = @divFloor(rl.getMonitorWidth(0), 2),
             .window_height = @divFloor(rl.getMonitorHeight(0), 2),
-            .decoder = try Decoder.init(),
+            .decoder = null,
         };
         rl.setWindowSize(app.window_width, app.window_height);
         rl.setWindowState(.{ .window_resizable = true });
@@ -43,7 +46,9 @@ const App = struct {
     }
 
     fn deinit(self: *Self) void {
-        self.decoder.deinit();
+        if (self.decoder) |*d| {
+            d.deinit();
+        }
         if (self.maybe_texture) |texture| {
             texture.unload();
         }
@@ -127,5 +132,6 @@ pub fn run() anyerror!void {
 }
 
 test "basic add functionality" {
-    try std.testing.expect(add(3, 7) == 10);
+    const s = try Decoder.init("");
+    s.deinit();
 }
