@@ -131,7 +131,7 @@ pub fn run() anyerror!void {
     }
 }
 
-test "basic add functionality" {
+test "basic test" {
     const x = try av.Packet.alloc();
     x.free();
 }
