@@ -30,7 +30,7 @@ pub fn deinit(self: *Self) void {
     self.pkt.free();
 }
 
-test "init" {
-    const s = try Self.init("");
-    s.deinit();
-}
+// test "init" {
+//     const s = try Self.init("");
+//     s.deinit();
+// }

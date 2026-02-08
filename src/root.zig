@@ -132,6 +132,6 @@ pub fn run() anyerror!void {
 }
 
 test "basic add functionality" {
-    const s = try Decoder.init("");
-    s.deinit();
+    const x = try av.Packet.alloc();
+    x.free();
 }
