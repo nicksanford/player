@@ -74,8 +74,8 @@ pub fn init(uri: [:0]const u8, width: i32, height: i32) !Self {
         video.codecpar.width,
         video.codecpar.height,
         .YUV420P,
-        @intCast(out_height),
         @intCast(out_width),
+        @intCast(out_height),
         .RGBA,
         .{ .FAST_BILINEAR = true },
         null,
@@ -210,12 +210,25 @@ test "nick init" {
     std.testing.log_level = .debug;
     av.av_log_set_level(.DEBUG);
     var s = try Self.init("/home/user/Downloads/bbb_sunflower_2160p_60fps_normal.mp4", 800, 450);
-    const maybe_frame = try s.next();
-    if (maybe_frame == null) {
-        std.testing.expect(false);
-        // std.testing.expect(frame.data.len > 0);
-    } else {
-        std.testing.expect(false);
+    var maybe_frame = try s.next();
+    try std.testing.expect(maybe_frame != null);
+    try std.testing.expect(maybe_frame.?.buf[0] != null);
+    try std.testing.expectEqual(1459328, maybe_frame.?.buf[0].?.size);
+    for (1..8) |i| {
+        try std.testing.expect(maybe_frame.?.buf[i] == null);
     }
+
+    for (0..100) |_| {
+        _ = try s.next();
+    }
+
+    maybe_frame = try s.next();
+    try std.testing.expect(maybe_frame != null);
+    try std.testing.expect(maybe_frame.?.buf[0] != null);
+    try std.testing.expectEqual(1459328, maybe_frame.?.buf[0].?.size);
+    for (1..8) |i| {
+        try std.testing.expect(maybe_frame.?.buf[i] == null);
+    }
+
     s.deinit();
 }

@@ -4,10 +4,6 @@ const av = @import("ffmpeg");
 const rl = @import("raylib");
 const Decoder = @import("Decoder.zig");
 
-pub fn add(a: i32, b: i32) i32 {
-    return a + b;
-}
-
 const Options = packed struct {
     __reserved: bool = false,
     drawFPS: bool = true,
@@ -36,6 +32,7 @@ const App = struct {
         const width = @divFloor(rl.getMonitorWidth(0), 2);
         const height = @divFloor(rl.getMonitorHeight(0), 2);
         const app: Self = .{ .window_width = width, .window_height = height, .image = rl.genImageColor(width, height, .red) };
+        app.image.unload();
         rl.setWindowSize(app.window_width, app.window_height);
         rl.setWindowState(.{ .window_resizable = true });
         rl.setTargetFPS(app.targetFPS);
@@ -106,7 +103,15 @@ const App = struct {
             if (frame == null) {
                 return;
             }
-            // self.image.width = self.frame.width;
+            self.image.width = decoder.rgba_frame.width;
+            self.image.height = decoder.rgba_frame.height;
+            self.image.data = decoder.rgba_frame.buf[0].?.data;
+            self.image.mipmaps = 1;
+            self.image.format = .uncompressed_r8g8b8a8;
+            if (self.texture) |t| {
+                t.unload();
+            }
+            self.texture = try rl.loadTextureFromImage(self.image);
         }
     }
     fn draw(self: *Self) void {
