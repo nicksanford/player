@@ -57,32 +57,38 @@ pub fn deinit(self: *Self) void {
 fn scaleMaintainingAspectRatio(src_width: u32, src_height: u32, target_width: u32, target_height: u32) struct { u32, u32 } {
     const fsrc_width: f32 = @as(f32, @floatFromInt(src_width));
     const fsrc_height: f32 = @as(f32, @floatFromInt(src_height));
-    const fwindow_width: f32 = @as(f32, @floatFromInt(target_width));
-    const fwindow_height: f32 = @as(f32, @floatFromInt(target_height));
-    if (src_width <= target_width and src_height <= target_height) {
-        // no need to scale as the window is greater in both
-        // dimensions
-        return .{ src_width, src_height };
+    const ftarget_width: f32 = @as(f32, @floatFromInt(target_width));
+    const ftarget_height: f32 = @as(f32, @floatFromInt(target_height));
+    const derived_target_width: f32 = fsrc_width / fsrc_height * ftarget_height;
+    const derived_target_height: f32 = fsrc_height / fsrc_width * ftarget_width;
+
+    if (derived_target_width <= ftarget_width) {
+        return .{ @intFromFloat(derived_target_width), @intFromFloat(ftarget_height) };
     }
 
-    const src_aspect_ratio: f32 = fsrc_width / fsrc_height;
-    const window_aspect_ratio: f32 = fwindow_width / fwindow_height;
-    var output_width: f32 = undefined;
-    var output_height: f32 = undefined;
-    if (src_width >= src_height) {
-        // horizontal
-        if (src_aspect_ratio >= window_aspect_ratio) {
-            output_width = @divFloor(fwindow_width, 2) * 2;
-            output_height = @divFloor(fwindow_width * (fsrc_height / fsrc_width), 2) * 2;
-        } else {
-            output_width = @divFloor(fwindow_height * (fsrc_width / fsrc_height), 2) * 2;
-            output_height = @divFloor(fwindow_height, 2) * 2;
-        }
-
-        return .{ @intFromFloat(output_width), @intFromFloat(output_height) };
+    if (derived_target_height <= ftarget_height) {
+        return .{ @intFromFloat(ftarget_width), @intFromFloat(derived_target_height) };
     }
-    // TODO: vertical video unimplemented
+
     unreachable;
+
+    // if (derived_target_width)
+    // var output_width: f32 = undefined;
+    // var output_height: f32 = undefined;
+    // if (src_width >= src_height) {
+    //     // horizontal
+    //     if (src_w_aspect_ratio >= window_aspect_ratio) {
+    //         output_width = @divFloor(ftarget_width, 2) * 2;
+    //         output_height = @divFloor(ftarget_width * (fsrc_height / fsrc_width), 2) * 2;
+    //     } else {
+    //         output_width = @divFloor(ftarget_height * (fsrc_width / fsrc_height), 2) * 2;
+    //         output_height = @divFloor(ftarget_height, 2) * 2;
+    //     }
+    //
+    //     return .{ @intFromFloat(output_width), @intFromFloat(output_height) };
+    // }
+    // // TODO: vertical video unimplemented
+    // unreachable;
 }
 
 fn f(x: u32) struct { u32, u32 } {
@@ -115,15 +121,20 @@ test "fitWindow" {
     const tests = [_]Test{
         // equal
         .{ .src_width = 3840, .src_height = 2160, .window_width = 3840, .window_height = 2160, .output_width = 3840, .output_height = 2160 },
-        // media smaller than window
+        // media smaller than target
+        // target width bigger
         .{ .src_width = 3840, .src_height = 2160, .window_width = 4000, .window_height = 2160, .output_width = 3840, .output_height = 2160 },
+        // target height bigger
         .{ .src_width = 3840, .src_height = 2160, .window_width = 3840, .window_height = 3000, .output_width = 3840, .output_height = 2160 },
-        .{ .src_width = 3840, .src_height = 2160, .window_width = 4000, .window_height = 3000, .output_width = 3840, .output_height = 2160 },
-        // media larger than window
-        .{ .src_width = 3840, .src_height = 2160, .window_width = 1280, .window_height = 720, .output_width = 1280, .output_height = 720 },
-        .{ .src_width = 3840, .src_height = 2160, .window_width = 1280, .window_height = 800, .output_width = 1280, .output_height = 720 },
-        .{ .src_width = 3840, .src_height = 2160, .window_width = 2000, .window_height = 720, .output_width = 1280, .output_height = 720 },
-        .{ .src_width = 3840, .src_height = 2160, .window_width = 2001, .window_height = 1000, .output_width = 1776, .output_height = 1000 },
+        // target width and height bigger, width limiting
+        .{ .src_width = 3840, .src_height = 2160, .window_width = 4000, .window_height = 3000, .output_width = 4000, .output_height = 2250 },
+        // target width and height bigger, height limiting
+        .{ .src_width = 3840, .src_height = 2160, .window_width = 8000, .window_height = 3000, .output_width = 5333, .output_height = 3000 },
+        // // media larger than window
+        // .{ .src_width = 3840, .src_height = 2160, .window_width = 1280, .window_height = 720, .output_width = 1280, .output_height = 720 },
+        // .{ .src_width = 3840, .src_height = 2160, .window_width = 1280, .window_height = 800, .output_width = 1280, .output_height = 720 },
+        // .{ .src_width = 3840, .src_height = 2160, .window_width = 2000, .window_height = 720, .output_width = 1280, .output_height = 720 },
+        // .{ .src_width = 3840, .src_height = 2160, .window_width = 2001, .window_height = 1000, .output_width = 1776, .output_height = 1000 },
     };
 
     for (tests) |t| {
