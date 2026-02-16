@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=player
+Comment=A Player
+Icon=player
+Exec=/home/user/code/player/zig-out/bin/player
+Terminal=false
+Categories=AudioVideo;Player;
