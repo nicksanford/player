@@ -25,17 +25,6 @@ pub fn init(uri: [:0]const u8, width: i32, height: i32) !Self {
     const input_ctx = try av.FormatContext.open_input(uri, null, null, null);
     errdefer input_ctx.close_input();
 
-    // std.log.debug("\n", .{});
-    // std.log.debug("BEFORE: pkt.size {d}, stream_index: {d}\n", .{ pkt.size, pkt.stream_index });
-    // try input_ctx.read_frame(pkt);
-    // std.log.debug("AFTER 1: pkt.size {d}, stream_index: {d}\n", .{ pkt.size, pkt.stream_index });
-    // try input_ctx.read_frame(pkt);
-    // std.log.debug("AFTER 2: pkt.size {d}, stream_index: {d}\n", .{pkt.size, pkt.stream_index});
-    // pkt.unref();
-    // try input_ctx.read_frame(pkt);
-    // std.log.debug("AFTER 3: pkt.size {d}, stream_index: {d}\n", .{pkt.size, pkt.stream_index});
-    // pkt.unref();
-
     // TODO: might also need to call find_stream_info
     const video_stream, const codec = try input_ctx.find_best_stream(.VIDEO, -1, -1);
     const video = input_ctx.streams[video_stream];
