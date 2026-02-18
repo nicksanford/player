@@ -58,7 +58,6 @@ pub fn init(uri: [:0]const u8, width: i32, height: i32) !Self {
     errdefer rgba_frame.free();
 
     const out_width, const out_height = scaleMaintainingAspectRatio(@intCast(video.codecpar.width), @intCast(video.codecpar.height), width, height);
-
     const sws_ctx = try av.sws.Context.get(
         video.codecpar.width,
         video.codecpar.height,
@@ -82,6 +81,39 @@ pub fn init(uri: [:0]const u8, width: i32, height: i32) !Self {
         .rgba_frame = rgba_frame,
         .sws_ctx = sws_ctx,
     };
+}
+
+pub fn resetResolution(self: *Self, width: i32, height: i32) !void {
+    const out_width, const out_height = scaleMaintainingAspectRatio(@intCast(self.video.codecpar.width), @intCast(self.video.codecpar.height), width, height);
+    const sws_ctx = av.sws.Context.get(
+        self.video.codecpar.width,
+        self.video.codecpar.height,
+        .YUV420P,
+        @intCast(out_width),
+        @intCast(out_height),
+        .RGBA,
+        .{ .FAST_BILINEAR = true },
+        null,
+        null,
+        null,
+    ) catch |err| {
+        std.log.err("about to die: w: {d}, h: {d}", .{ out_width, out_height });
+        return err;
+    };
+    errdefer sws_ctx.free();
+
+    const yuv_frame = try av.Frame.alloc();
+    errdefer yuv_frame.free();
+
+    const rgba_frame = try av.Frame.alloc();
+    errdefer rgba_frame.free();
+
+    self.sws_ctx.free();
+    self.yuv_frame.free();
+    self.rgba_frame.free();
+    self.sws_ctx = sws_ctx;
+    self.yuv_frame = yuv_frame;
+    self.rgba_frame = rgba_frame;
 }
 
 pub fn next(self: *const Self) !?*av.Frame {
@@ -112,6 +144,7 @@ pub fn next(self: *const Self) !?*av.Frame {
             return err;
         };
 
+        std.log.warn("srcW: {d} srcH: {d}, dstW: {d}, dstH: {d}\n", .{ self.yuv_frame.width, self.yuv_frame.height, self.rgba_frame.width, self.rgba_frame.height });
         try self.sws_ctx.scale_frame(self.rgba_frame, self.yuv_frame);
         return self.rgba_frame;
     }
@@ -202,7 +235,8 @@ test "nick init" {
     var maybe_frame = try s.next();
     try std.testing.expect(maybe_frame != null);
     try std.testing.expect(maybe_frame.?.buf[0] != null);
-    try std.testing.expectEqual(1459328, maybe_frame.?.buf[0].?.size);
+    const frameSize = 1536128;
+    try std.testing.expectEqual(frameSize, maybe_frame.?.buf[0].?.size);
     for (1..8) |i| {
         try std.testing.expect(maybe_frame.?.buf[i] == null);
     }
@@ -214,7 +248,7 @@ test "nick init" {
     maybe_frame = try s.next();
     try std.testing.expect(maybe_frame != null);
     try std.testing.expect(maybe_frame.?.buf[0] != null);
-    try std.testing.expectEqual(1459328, maybe_frame.?.buf[0].?.size);
+    try std.testing.expectEqual(frameSize, maybe_frame.?.buf[0].?.size);
     for (1..8) |i| {
         try std.testing.expect(maybe_frame.?.buf[i] == null);
     }

@@ -463,6 +463,10 @@ int main(void) {
         image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
         // TODO: This might be dangerous
         image.data = video_ctx->buffer;
+        printf("buffer: width: %d, height: %d, size: %d\n",
+               video_ctx->buffer_width, video_ctx->buffer_height,
+               video_ctx->buffer_size);
+
         UnloadTexture(texture);
         texture = LoadTextureFromImage(image);
       } else {

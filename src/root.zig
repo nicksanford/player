@@ -49,18 +49,24 @@ const App = struct {
         rl.closeWindow(); // Close window and OpenGL context
     }
 
-    fn handleResize(self: *Self) void {
+    fn handleResize(self: *Self) !void {
         if (rl.isWindowResized()) {
             self.window_width = rl.getScreenWidth();
             self.window_height = rl.getScreenHeight();
+            if (self.decoder) |*decoder| {
+                try decoder.resetResolution(self.window_width, self.window_height);
+            }
         }
     }
 
-    fn handleToggleFullScreen(self: *Self) void {
+    fn handleToggleFullScreen(self: *Self) !void {
         if (rl.isKeyPressed(rl.KeyboardKey.t)) {
             rl.toggleFullscreen();
             self.window_width = rl.getScreenWidth();
             self.window_height = rl.getScreenHeight();
+            if (self.decoder) |*decoder| {
+                try decoder.resetResolution(self.window_width, self.window_height);
+            }
         }
     }
 
@@ -103,9 +109,10 @@ const App = struct {
             if (frame == null) {
                 return;
             }
+            std.log.warn("buffer: height: {d}, width: {d}, size: {d}", .{ decoder.rgba_frame.width, decoder.rgba_frame.height, decoder.rgba_frame.buf[0].?.size });
             self.image.width = decoder.rgba_frame.width;
             self.image.height = decoder.rgba_frame.height;
-            self.image.data = decoder.rgba_frame.buf[0].?.data;
+            self.image.data = decoder.rgba_frame.data[0];
             self.image.mipmaps = 1;
             self.image.format = .uncompressed_r8g8b8a8;
             if (self.texture) |t| {
@@ -138,8 +145,8 @@ pub fn run() anyerror!void {
     var app = try App.init();
     defer app.deinit();
     while (!rl.windowShouldClose()) {
-        app.handleResize();
-        app.handleToggleFullScreen();
+        try app.handleResize();
+        try app.handleToggleFullScreen();
         try app.handleFilesDropped();
         try app.decode();
         app.draw();
