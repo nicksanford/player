@@ -4,3 +4,6 @@
 [submodule "FFmpeg"]
 	path = FFmpeg
 	url = git@github.com:FFmpeg/FFmpeg.git
+[submodule "vendor/ffmpeg"]
+	path = vendor/ffmpeg
+	url = git@github.com:nicksanford/ffmpeg.git
