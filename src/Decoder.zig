@@ -72,7 +72,7 @@ pub fn init(uri: [:0]const u8, width: i32, height: i32) !Self {
         null,
         null,
     );
-    const buf_size = try av.nick_tmp_image_get_buffer_size(.RGBA, @intCast(out_width), @intCast(out_height), 1);
+    const buf_size = try av.image_get_buffer_size(.RGBA, @intCast(out_width), @intCast(out_height), 1);
     const buf = try av.malloc(buf_size);
 
     return .{
@@ -114,7 +114,7 @@ pub fn resetResolution(self: *Self, width: i32, height: i32) !void {
     const rgba_frame = try av.Frame.alloc();
     errdefer rgba_frame.free();
 
-    const buf_size = try av.nick_tmp_image_get_buffer_size(.RGBA, @intCast(out_width), @intCast(out_height), 1);
+    const buf_size = try av.image_get_buffer_size(.RGBA, @intCast(out_width), @intCast(out_height), 1);
     const buf = try av.malloc(buf_size);
 
     self.sws_ctx.free();
@@ -162,7 +162,7 @@ pub fn next(self: *const Self) !?[]u8 {
 
         std.log.warn("srcW: {d} srcH: {d}, dstW: {d}, dstH: {d}\n", .{ self.yuv_frame.width, self.yuv_frame.height, self.rgba_frame.width, self.rgba_frame.height });
         try self.sws_ctx.scale_frame(self.rgba_frame, self.yuv_frame);
-        _ = av.av_image_copy_to_buffer(self.buf.ptr, @intCast(self.buf.len), &self.rgba_frame.data, &self.rgba_frame.linesize, self.rgba_frame.format.pixel, self.rgba_frame.width, self.rgba_frame.height, 1);
+        try av.image_copy_to_buffer(self.buf, &self.rgba_frame.data, &self.rgba_frame.linesize, self.rgba_frame.format.pixel, self.rgba_frame.width, self.rgba_frame.height, 1);
         return self.buf;
     }
 }

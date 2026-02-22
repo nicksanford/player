@@ -33,8 +33,8 @@
     // internet connectivity.
     .dependencies = .{
         .ffmpeg = .{
-            .url = "git+https://github.com/nicksanford/ffmpeg.git#ca35f6b4161be20a6ad7fbf35e7ba6b93f6d0318",
-            .hash = "ffmpeg-7.0.1-8-zT7QA5eCCAR9evgsNa8SKOr-WsZDd1VAJaIazTOrEtTG",
+            .url = "git+https://github.com/nicksanford/ffmpeg.git#f5645a415489c7bc35243fb2bd81ed0942efc28c",
+            .hash = "ffmpeg-7.0.1-8-zT7QA4KCCARAKedROfCgihKHNU3pnEfd9EdQKd14rM6y",
         },
         .raylib_zig = .{
             .url = "git+https://github.com/raylib-zig/raylib-zig?ref=devel#cd71c85d571027ac8033357f83b124ee051825b3",
