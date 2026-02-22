@@ -246,29 +246,36 @@ test "fitWindow" {
         try std.testing.expectEqual(.{ t.output_width, t.output_height }, scaleMaintainingAspectRatio(t.src_width, t.src_height, t.target_width, t.target_height));
     }
 }
-test "nick init" {
+test "test decoder" {
     std.testing.log_level = .debug;
     av.av_log_set_level(.DEBUG);
     var s = try Self.init("/home/user/Downloads/bbb_sunflower_2160p_60fps_normal.mp4", 800, 450);
-    var maybe_frame = try s.next();
-    try std.testing.expect(maybe_frame != null);
-    try std.testing.expect(maybe_frame.?.buf[0] != null);
-    const frameSize = 1536128;
-    try std.testing.expectEqual(frameSize, maybe_frame.?.buf[0].?.size);
-    for (1..8) |i| {
-        try std.testing.expect(maybe_frame.?.buf[i] == null);
-    }
-
+    var data = try s.next();
+    try std.testing.expect(data != null);
+    const initialFrameSize = 1440000;
+    try std.testing.expectEqual(initialFrameSize, data.?.len);
     for (0..100) |_| {
-        _ = try s.next();
+        data = try s.next();
+        try std.testing.expect(data != null);
+        try std.testing.expectEqual(initialFrameSize, data.?.len);
     }
 
-    maybe_frame = try s.next();
-    try std.testing.expect(maybe_frame != null);
-    try std.testing.expect(maybe_frame.?.buf[0] != null);
-    try std.testing.expectEqual(frameSize, maybe_frame.?.buf[0].?.size);
-    for (1..8) |i| {
-        try std.testing.expect(maybe_frame.?.buf[i] == null);
+    // invalid resolution
+    try s.resetResolution(1, 1);
+    data = try s.next();
+    try std.testing.expect(data == null);
+
+    // back to a valid resolution of a different size
+    try s.resetResolution(450, 800);
+
+    data = try s.next();
+    try std.testing.expect(data != null);
+    const newFrameSize = 455400;
+    try std.testing.expectEqual(newFrameSize, data.?.len);
+    for (0..100) |_| {
+        data = try s.next();
+        try std.testing.expect(data != null);
+        try std.testing.expectEqual(newFrameSize, data.?.len);
     }
 
     s.deinit();
