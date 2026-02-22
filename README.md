@@ -3,7 +3,10 @@ TODO:
 - [x] Get video demuxing working (single threaded)
 - [x] Get video decoding working (single threaded)
 - [x] Get video playing working (single threaded)
-- [ ] Expose av_image_copy_to_buffer to zig
+- [x] Expose av_image_copy_to_buffer to zig
+- [x] Fix zero dimension bug
+- [ ] wrap nick_tmp_* functions in an ideomatic zig interface
+- [ ] Wrap video in black borders
 - [ ] Get audio demuxing, decoding, playing working (single threaded)
 - [ ] Get video & audio working (multi threaded)
 - [ ] Support hardware acceleration

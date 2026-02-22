@@ -11,6 +11,7 @@ yuv_frame: *av.Frame,
 rgba_frame: *av.Frame,
 sws_ctx: *av.sws.Context,
 buf: []u8,
+paused: bool,
 // buffer: []u8,
 // sws_ctx: *av.sws.Context,
 const Self = @This();
@@ -75,6 +76,7 @@ pub fn init(uri: [:0]const u8, width: i32, height: i32) !Self {
     const buf = try av.malloc(buf_size);
 
     return .{
+        .paused = false,
         .buf = buf,
         .pkt = pkt,
         .demuxer_ctx = input_ctx,
@@ -100,9 +102,9 @@ pub fn resetResolution(self: *Self, width: i32, height: i32) !void {
         null,
         null,
         null,
-    ) catch |err| {
-        std.log.err("about to die: w: {d}, h: {d}", .{ out_width, out_height });
-        return err;
+    ) catch {
+        self.paused = true;
+        return;
     };
     errdefer sws_ctx.free();
 
@@ -118,16 +120,19 @@ pub fn resetResolution(self: *Self, width: i32, height: i32) !void {
     self.sws_ctx.free();
     self.yuv_frame.free();
     self.rgba_frame.free();
-    var tmp: ?[]u8 = self.buf;
-    av.free(&tmp);
+    av.free(self.buf.ptr);
 
     self.sws_ctx = sws_ctx;
     self.yuv_frame = yuv_frame;
     self.rgba_frame = rgba_frame;
     self.buf = buf;
+    self.paused = false;
 }
 
-pub fn next(self: *const Self) !?*av.Frame {
+pub fn next(self: *const Self) !?[]u8 {
+    if (self.paused) {
+        return null;
+    }
     std.log.debug("video_stream: {d}\n", .{self.video_stream});
     var i: u32 = 0;
     while (true) {
@@ -157,7 +162,8 @@ pub fn next(self: *const Self) !?*av.Frame {
 
         std.log.warn("srcW: {d} srcH: {d}, dstW: {d}, dstH: {d}\n", .{ self.yuv_frame.width, self.yuv_frame.height, self.rgba_frame.width, self.rgba_frame.height });
         try self.sws_ctx.scale_frame(self.rgba_frame, self.yuv_frame);
-        return self.rgba_frame;
+        _ = av.av_image_copy_to_buffer(self.buf.ptr, @intCast(self.buf.len), &self.rgba_frame.data, &self.rgba_frame.linesize, self.rgba_frame.format.pixel, self.rgba_frame.width, self.rgba_frame.height, 1);
+        return self.buf;
     }
 }
 
@@ -167,8 +173,7 @@ pub fn deinit(self: Self) void {
     self.yuv_frame.free();
     self.rgba_frame.free();
     self.sws_ctx.free();
-    var tmp: ?[]u8 = self.buf;
-    av.free(&tmp);
+    av.free(self.buf.ptr);
 }
 
 fn scaleMaintainingAspectRatio(src_width: i32, src_height: i32, target_width: i32, target_height: i32) struct { i32, i32 } {
@@ -271,6 +276,5 @@ test "nick init" {
 
 test "av malloc av free" {
     const buf = try av.malloc(100);
-    var tmp: ?[]u8 = buf;
-    av.free(&tmp);
+    av.free(buf.ptr);
 }

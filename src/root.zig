@@ -105,14 +105,14 @@ const App = struct {
 
     fn decode(self: *Self) !void {
         if (self.decoder) |decoder| {
-            const frame = try decoder.next();
-            if (frame == null) {
+            const data = try decoder.next();
+            if (data == null) {
                 return;
             }
             std.log.warn("buffer: height: {d}, width: {d}, size: {d}", .{ decoder.rgba_frame.width, decoder.rgba_frame.height, decoder.rgba_frame.buf[0].?.size });
             self.image.width = decoder.rgba_frame.width;
             self.image.height = decoder.rgba_frame.height;
-            self.image.data = decoder.rgba_frame.data[0];
+            self.image.data = data.?.ptr;
             self.image.mipmaps = 1;
             self.image.format = .uncompressed_r8g8b8a8;
             if (self.texture) |t| {
