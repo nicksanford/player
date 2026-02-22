@@ -5,7 +5,7 @@ TODO:
 - [x] Get video playing working (single threaded)
 - [x] Expose av_image_copy_to_buffer to zig
 - [x] Fix zero dimension bug
-- [ ] wrap nick_tmp_* functions in an ideomatic zig interface
+- [x] wrap nick_tmp_* functions in an ideomatic zig interface
 - [ ] Wrap video in black borders
 - [ ] Get audio demuxing, decoding, playing working (single threaded)
 - [ ] Get video & audio working (multi threaded)
