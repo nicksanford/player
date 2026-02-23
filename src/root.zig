@@ -23,7 +23,8 @@ const App = struct {
     file_dropped: bool = false,
     opts: Options = .{},
     texture: ?rl.Texture2D = null,
-    image: rl.Image,
+    video_frame: rl.Image,
+    render_frame: rl.Image,
 
     const Self = @This();
     fn init() !Self {
@@ -31,8 +32,13 @@ const App = struct {
         rl.initWindow(800, 450, "raylib-zig [core] example - basic window");
         const width = @divFloor(rl.getMonitorWidth(0), 2);
         const height = @divFloor(rl.getMonitorHeight(0), 2);
-        const app: Self = .{ .window_width = width, .window_height = height, .image = rl.genImageColor(width, height, .red) };
-        app.image.unload();
+        const app: Self = .{
+            .window_width = width,
+            .window_height = height,
+            .video_frame = rl.genImageColor(width, height, .red),
+            .render_frame = rl.genImageColor(width, height, .black),
+        };
+        app.video_frame.unload();
         rl.setWindowSize(app.window_width, app.window_height);
         rl.setWindowState(.{ .window_resizable = true });
         rl.setTargetFPS(app.targetFPS);
@@ -46,6 +52,7 @@ const App = struct {
         if (self.texture) |texture| {
             texture.unload();
         }
+        self.render_frame.unload();
         rl.closeWindow(); // Close window and OpenGL context
     }
 
@@ -53,6 +60,8 @@ const App = struct {
         if (rl.isWindowResized()) {
             self.window_width = rl.getScreenWidth();
             self.window_height = rl.getScreenHeight();
+            self.render_frame.unload();
+            self.render_frame = rl.genImageColor(self.window_width, self.window_height, .black);
             if (self.decoder) |*decoder| {
                 try decoder.resetResolution(self.window_width, self.window_height);
             }
@@ -64,6 +73,8 @@ const App = struct {
             rl.toggleFullscreen();
             self.window_width = rl.getScreenWidth();
             self.window_height = rl.getScreenHeight();
+            self.render_frame.unload();
+            self.render_frame = rl.genImageColor(self.window_width, self.window_height, .black);
             if (self.decoder) |*decoder| {
                 try decoder.resetResolution(self.window_width, self.window_height);
             }
@@ -110,20 +121,36 @@ const App = struct {
                 return;
             }
             std.log.warn("buffer: height: {d}, width: {d}, size: {d}", .{ decoder.rgba_frame.width, decoder.rgba_frame.height, decoder.rgba_frame.buf[0].?.size });
-            self.image.width = decoder.rgba_frame.width;
-            self.image.height = decoder.rgba_frame.height;
-            self.image.data = data.?.ptr;
-            self.image.mipmaps = 1;
-            self.image.format = .uncompressed_r8g8b8a8;
+            self.video_frame.width = decoder.rgba_frame.width;
+            self.video_frame.height = decoder.rgba_frame.height;
+            self.video_frame.data = data.?.ptr;
+            self.video_frame.mipmaps = 1;
+            self.video_frame.format = .uncompressed_r8g8b8a8;
+            self.render_frame.drawImage(
+                self.video_frame,
+                rl.Rectangle{
+                    .width = @as(f32, @floatFromInt(self.video_frame.width)),
+                    .height = @as(f32, @floatFromInt(self.video_frame.height)),
+                    .x = 0,
+                    .y = 0,
+                },
+                rl.Rectangle{
+                    .width = @as(f32, @floatFromInt(self.video_frame.width)),
+                    .height = @as(f32, @floatFromInt(self.video_frame.height)),
+                    .x = @as(f32, @floatFromInt(self.window_width - self.video_frame.width)) / 2,
+                    .y = @as(f32, @floatFromInt(self.window_height - self.video_frame.height)) / 2,
+                },
+                .white,
+            );
             if (self.texture) |t| {
                 t.unload();
             }
-            self.texture = try rl.loadTextureFromImage(self.image);
+            self.texture = try rl.loadTextureFromImage(self.render_frame);
         }
     }
     fn draw(self: *Self) void {
         rl.beginDrawing();
-        rl.clearBackground(.white);
+        rl.clearBackground(.black);
 
         if (self.texture) |texture| {
             rl.drawTexture(texture, 0, 0, .white);

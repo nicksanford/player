@@ -177,22 +177,12 @@ pub fn deinit(self: Self) void {
 }
 
 fn scaleMaintainingAspectRatio(src_width: i32, src_height: i32, target_width: i32, target_height: i32) struct { i32, i32 } {
-    const fsrc_width: f32 = @as(f32, @floatFromInt(src_width));
-    const fsrc_height: f32 = @as(f32, @floatFromInt(src_height));
-    const ftarget_width: f32 = @as(f32, @floatFromInt(target_width));
-    const ftarget_height: f32 = @as(f32, @floatFromInt(target_height));
-    const derived_target_width: f32 = fsrc_width / fsrc_height * ftarget_height;
-    const derived_target_height: f32 = fsrc_height / fsrc_width * ftarget_width;
-
-    if (derived_target_width <= ftarget_width) {
-        return .{ @intFromFloat(derived_target_width), @intFromFloat(ftarget_height) };
-    }
-
-    if (derived_target_height <= ftarget_height) {
-        return .{ @intFromFloat(ftarget_width), @intFromFloat(derived_target_height) };
-    }
-
-    unreachable;
+    const w: f32 = @as(f32, @floatFromInt(target_width));
+    const h: f32 = @as(f32, @floatFromInt(target_height));
+    const frame_w: f32 = @as(f32, @floatFromInt(src_width));
+    const frame_h: f32 = @as(f32, @floatFromInt(src_height));
+    const scale = @min(w / frame_w, h / frame_h);
+    return .{ @intFromFloat(frame_w * scale), @intFromFloat(frame_h * scale) };
 }
 
 test "fitWindow" {

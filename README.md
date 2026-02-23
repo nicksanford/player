@@ -6,7 +6,8 @@ TODO:
 - [x] Expose av_image_copy_to_buffer to zig
 - [x] Fix zero dimension bug
 - [x] wrap nick_tmp_* functions in an ideomatic zig interface
-- [ ] Wrap video in black borders
+- [x] Wrap video in black borders
+- [ ] Swap renderer to SDL3
 - [ ] Get audio demuxing, decoding, playing working (single threaded)
 - [ ] Get video & audio working (multi threaded)
 - [ ] Support hardware acceleration
